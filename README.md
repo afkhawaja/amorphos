@@ -1,4 +1,4 @@
-# amorphos
+# AmorphOS
 www.amorphos.io
 
 Contact us: akhawaja@utexas.edu
