@@ -17,6 +17,10 @@ AmorphOS currently provides the following:
      - Capable of scheduling multiple applications to run concurrently on the FPGA
      - Capable of controlling multiple FPGAs and migrating applications between them
 
+# Getting started
+
+The currently most supported system is Amazon's F1 AWS platform, which we suggest trying for first time users. There is a detailed [getting started](link here) page to walk a user from a fresh pull of this repository to 
+
 ## Citing us
 
 If AmorphOS or any of its components are used in your work, please cite the original [paper](https://www.usenix.org/conference/osdi18/presentation/khawaja) which appeared in the 13th USENIX Symposium on Operating Systems Design and Implementation, OSDI'18.
@@ -56,8 +60,3 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 ## Maintained By
 
 Ahmed Khawaja (akhawaja@utexas.edu)
-
-## Other
-XDMA Driver
-
-On Amazon F1, make sure the XMDA is installed (https://github.com/aws/aws-fpga/blob/master/sdk/linux_kernel_drivers/xdma/xdma_install.md), running, and was built with a proper PCIE Vendor ID.
