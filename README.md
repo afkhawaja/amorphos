@@ -19,7 +19,9 @@ AmorphOS currently provides the following:
 
 # Getting started
 
-The currently most supported system is Amazon's F1 AWS platform, which we suggest trying for first time users. There is a detailed [getting started](link here) page to walk a user from a fresh pull of this repository to 
+The currently most supported system is Amazon's F1 AWS platform, which we suggest trying for first time users. There is a detailed
+[getting started](https://github.com/afkhawaja/amorphos/blob/master/docs/Getting_Started_AWS_F1.md) guide to walk a user from a fresh
+pull of this repository to running an example program to demonstrate some of AmorphOS's functionality.
 
 ## Citing us
 
