@@ -81,10 +81,80 @@ State Code of available.
 At this point, we are done with image creation (and the HDK) and we recommend you restart your terminal, since we will need to source
 the SDK environment now instead.
 
+## Build the AmorphOS Host Scheduler
+
+Before we can build the AmorphOS Host Scheduler, we need to make minor modifications to the aws-fpga source code. The reason we do this
+is because all AmorphOS source code is in C++ and these files were written to be compiled as C Code. C++ does not support the static
+keyword for array size declarations. The other change is hoisting a variable declaration so the compiler does not get confused. Below
+the changes are listed as a git diff, but are only 3 lines of modifications you can make manually. This step is required to
+compile the AmorphOS Host Scheduler. The two files are:
+
+```
+$AWS_FPGA_DIR/aws-fpga/sdk/userspace/fpga_libs/fpga_dma/fpga_dma_utils.c
+$AWS_FPGA_DIR/aws-fpga/sdk/userspace/include/fpga_dma.h
+```
+
+Here is the diff:
+
+```
+diff --git a/sdk/userspace/fpga_libs/fpga_dma/fpga_dma_utils.c b/sdk/userspace/fpga_libs/fpga_dma/fpga_dma_utils.c
+index 75c6a7d..b75fbee 100644
+--- a/sdk/userspace/fpga_libs/fpga_dma/fpga_dma_utils.c
++++ b/sdk/userspace/fpga_libs/fpga_dma/fpga_dma_utils.c
+@@ -88,7 +88,7 @@ err:
+
+ int fpga_dma_device_id(enum fpga_dma_driver which_driver, int slot_id,
+     int channel, bool is_read,
+-    char device_file[static FPGA_DEVICE_FILE_NAME_MAX_LEN])
++    char device_file[FPGA_DEVICE_FILE_NAME_MAX_LEN])
+ {
+     int rc = 0;
+     int device_num;
+@@ -187,6 +187,7 @@ int fpga_pci_get_dma_device_num(enum fpga_dma_driver which_driver,
+     char *possible_dbdf = NULL;
+     struct fpga_pci_resource_map resource;
+     char sysfs_path_instance[MAX_FD_LEN + sizeof(entry->d_name) + sizeof(path)];
++    DIR * dirp = 0;
+
+     const struct dma_opts_s *dma_opts = fpga_dma_get_dma_opts(which_driver);
+     fail_on_with_code(!dma_opts, err, rc, -EINVAL, "invalid DMA driver");
+@@ -207,7 +208,7 @@ int fpga_pci_get_dma_device_num(enum fpga_dma_driver which_driver,
+     fail_on_with_code(rc < 1, err, rc, FPGA_ERR_SOFTWARE_PROBLEM,
+         "Could not record DBDF");
+
+-    DIR *dirp = opendir(path);
++    dirp = opendir(path);
+     fail_on_with_code(!dirp, err, rc, FPGA_ERR_SOFTWARE_PROBLEM,
+         "opendir failed for path=%s", path);
+
+diff --git a/sdk/userspace/include/fpga_dma.h b/sdk/userspace/include/fpga_dma.h
+index 72f7ec1..42f9d04 100644
+--- a/sdk/userspace/include/fpga_dma.h
++++ b/sdk/userspace/include/fpga_dma.h
+@@ -70,7 +70,7 @@ int fpga_dma_open_queue(enum fpga_dma_driver which_driver, int slot_id,
+  */
+ int fpga_dma_device_id(enum fpga_dma_driver which_driver, int slot_id,
+     int channel, bool is_read,
+-    char device_file[static FPGA_DEVICE_FILE_NAME_MAX_LEN]);
++    char device_file[FPGA_DEVICE_FILE_NAME_MAX_LEN]);
+
+ /**
+  * Use this function to copy an entire buffer from the FPGA into a buffer in
+
+```
+
+After those two files have been modified, do the following:
+
+```
+cd $AWS_FPGA_DIR\amorphos\src\host\scheduler
+make
+```
+
+Now the AmorphOS Host Scheduler, aos_host_scheduler, should have been built successfully.
+
 ## Build the source code for the MemDrive host side application
 
 
-## Build the AmorphOS Host Scheduler
 
 ## Create config JSON for the scheduler
 
