@@ -2,7 +2,7 @@
 
 MemDrive is a sample application provided to illustrate how an application should be written on both the host and FPGA sides. It is able 
 to receive control inputs from the host and do read/write patterns to DRAM. MemDrive is the featured example for running AmorphOS on AWS
-F1 (guide here)[https://github.com/afkhawaja/amorphos/blob/master/docs/Getting_Started_AWS_F1.md]. 
+F1 [guide here](https://github.com/afkhawaja/amorphos/blob/master/docs/Getting_Started_AWS_F1.md). 
 
 MemDrive_Cntrl.sv is the SystemVerilog source for the MemDrive application and provides a good example of how an Application on the FPGA
 side is to interact with AmorphOS's interfaces. MemDrive is programmable by the host to programmatically generate two concurrent read/write
