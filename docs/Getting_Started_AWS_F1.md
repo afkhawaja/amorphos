@@ -83,10 +83,17 @@ the SDK environment now instead.
 
 ## Build the AmorphOS Host Scheduler
 
+At this point, we suggest restarting your terminal and doing the following:
+
+```
+export AWS_FPGA_DIR=/home/centos/src/project_data
+source $AWS_FPGA_DIR/aws-fpga/sdk_setup.sh
+```
+
 Before we can build the AmorphOS Host Scheduler, we need to make minor modifications to the aws-fpga source code. The reason we do this
 is because all AmorphOS source code is in C++ and these files were written to be compiled as C Code. C++ does not support the static
 keyword for array size declarations. The other change is hoisting a variable declaration so the compiler does not get confused. Below
-the changes are listed as a git diff, but are only 3 lines of modifications you can make manually. This step is required to
+the changes are listed as a git diff, but are only 4 lines of modifications you can make manually. This step is required to
 compile the AmorphOS Host Scheduler. The two files are:
 
 ```
@@ -146,18 +153,59 @@ index 72f7ec1..42f9d04 100644
 After those two files have been modified, do the following:
 
 ```
-cd $AWS_FPGA_DIR\amorphos\src\host\scheduler
+cd $AWS_FPGA_DIR/amorphos/src/host/scheduler
 make
 ```
 
-Now the AmorphOS Host Scheduler, aos_host_scheduler, should have been built successfully.
+Now the AmorphOS Host Scheduler, aos_host_sched, should have been built successfully.
 
-## Build the source code for the MemDrive host side application
+## Modify config JSON for the scheduler
 
+The AmorphOS Host Scheduler uses json files to keep track of all the F1 images it has access to and which applications were built
+into each image. We provide a skeleton in the same directory where you built the host scheduler from. The filename is fpga_images.json .
+We will need to modify it for our MemDrive example to work with the afi and agfi values that were output by the 
+aws ec2 create-fpga-image command you ran earlier when you created the FPGA image. Modify the following lines in fpga_images.json:
 
-
-## Create config JSON for the scheduler
+```
+"afi" :  "afi-XXXXXXXXXXXXX",
+"agfi" : "agfi-YYYYYYYYYYYY",
+```
 
 ## Launch AmorphOS Scheduler
 
+The host scheduler must be run with root privileges. The two command line arguments are the number of FPGAs on the system (1 FPGA F1
+in this example) and the FULL PATH to the fpga_images.json file we just modified.
+
+```
+cd $AWS_FPGA_DIR/amorphos/src/host/scheduler
+sudo ./aos_host_sched 1 $AWS_FPGA_DIR/amorphos/src/host/scheduler/fpga_images.json
+```
+
+The scheduler should display visual output to let you know it started successfully.
+
+## Build the source code for the MemDrive host side application
+
+Now we need to build MemDrive host side application:
+
+```
+cd $AWS_FPGA_DIR/amorphos/example/memdrive/
+make
+```
+
+The executable file memdrive_client should have been created.
+
 ## Run MemDrive host side application
+
+With the AmorphOS Host Scheduler running, we can now run run the memdrive_client application, which will run multiple instances of the
+MemDrive application on the FPGA. The example uses a single executable to control all  the instances, but this is not required.
+
+```
+cd $AWS_FPGA_DIR/amorphos/example/memdrive/
+./memdrive_client
+```
+
+If everything ran successfully, you should see the following:
+
+```
+====== MemDrive Successfully Run =========
+```
