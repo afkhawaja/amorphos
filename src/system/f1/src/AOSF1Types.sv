@@ -6,7 +6,7 @@ package  AOSF1Types;
 // Used to conditionally compile certain modules
 parameter USING_F1 = 1;
 
-parameter F1_NUM_APPS = 1;
+parameter F1_NUM_APPS = 8;
 parameter F1_ALL_APPS_SAME = 1;
 
 // MemDrive_SoftReg
@@ -34,7 +34,7 @@ parameter F1_CONFIG_SOFTREG_CONFIG = 2;
 parameter F1_CONFIG_DDR_CONFIG     = 3;
 // App Configs
 // 0 - None
-// 1 - Single MemDrive
+// 1 - MemDrive
 // 2 - Real/Dummy DNNWeaver
 // 3 - Bitcoin
 parameter F1_CONFIG_APPS           = 1;
@@ -52,7 +52,7 @@ parameter NUM_AMI_INSTS = 1;
 parameter F1_ADDR_SHIFT_XLATE = $clog2(NUM_AMI_INSTS);
 // SoftReg interface over AXI-Lite
 parameter F1_AXIL_USE_EXTENDER = 0;
-//
+// Use tree to help routing
 parameter F1_AXIL_USE_ROUTE_TREE = 0;
 // Write addresses coming from the F1 Shell
 parameter F1_AXIL_wr_addr_FIFO_Type  = 0;

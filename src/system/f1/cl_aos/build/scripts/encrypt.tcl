@@ -23,8 +23,6 @@ set HDK_SHELL_DESIGN_DIR $::env(HDK_SHELL_DESIGN_DIR)
 set CL_DIR $::env(CL_DIR)
 set AOS_SRC $::env(AOS_SRC)
 set F1_SRC $::env(F1_SRC)
-set DNN_SRC $::env(DNN_SRC)
-set BC_SRC $::env(BC_SRC)
 set TARGET_DIR $CL_DIR/build/src_post_encryption
 set UNUSED_TEMPLATES_DIR $HDK_SHELL_DESIGN_DIR/interfaces
 # Remove any previously encrypted files, that may no longer be used

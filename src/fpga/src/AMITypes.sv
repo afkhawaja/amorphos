@@ -21,7 +21,7 @@ AMI_HETERO_CONFIG[2] = 0; // app 2
 AMI_HETERO_CONFIG[3] = 0; // app 3*/
 
 parameter AMI_NUM_REAL_DNN = 4;
-parameter AMI_NUM_APPS     = 1;
+parameter AMI_NUM_APPS     = 8;
 parameter AMI_NUM_PORTS    = 2;
 parameter AMI_NUM_CHANNELS = 4;
 
