@@ -17,18 +17,19 @@ the AmorphOS Host Scheduler.
 ## Source code setup
 
 To simplify the rest of this guide, let's set an environment variable to the top level directory (most likely 
-/home/centos/src/project_data/ on AWS CentOS machines) where you have the aws-fpga repository
+/home/centos/src/project_data/aws-fpga on AWS CentOS machines) where you have the aws-fpga repository
 checked out
 
 ```
-export AWS_FPGA_DIR=/home/centos/src/project_data
+export AWS_FPGA_DIR=/home/centos/src/project_data/aws-fpga
 ```
 
-We will now clone this repository at the same level.
+We will now clone this repository in the parent directory of that repo and set an environment variable to track it.
 
 ```
-cd $AWS_FPGA_DIR
+cd $AWS_FPGA_DIR/..
 git clone https://github.com/afkhawaja/amorphos.git
+export AOS_DIR=$AWS_FPGA_DIR/../amorphos
 ```
 
 Now you should have aws-fpga and amorphos directories checked out at the same level.
@@ -36,13 +37,13 @@ Now you should have aws-fpga and amorphos directories checked out at the same le
 Next we will copy the AmorphOS CL directory to where F1 expects it for the build process:
 
 ```
-cp -r $AWS_FPGA_DIR/amorphos/src/system/f1/cl_aos $AWS_FPGA_DIR/aws-fpga/hdk/cl/developer_designs/cl_aos
+cp -r $AOS_DIR/src/system/f1/cl_aos $AWS_FPGA_DIR/hdk/cl/developer_designs/cl_aos
 ```
 
 The F1 build process requires the CL_DIR environment variable to be set:
 
 ```
-export CL_DIR=$AWS_FPGA_DIR//aws-fpga/hdk/cl/developer_designs/cl_aos
+export CL_DIR=$AWS_FPGA_DIR/hdk/cl/developer_designs/cl_aos
 ```
 
 
@@ -51,7 +52,7 @@ export CL_DIR=$AWS_FPGA_DIR//aws-fpga/hdk/cl/developer_designs/cl_aos
 Source the F1 hdk_setup file:
 
 ```
-source $AWS_FPGA_DIR/aws-fpga/hdk_setup.sh
+source $AWS_FPGA_DIR/hdk_setup.sh
 ```
 
 Launch the  build process:
@@ -86,8 +87,9 @@ the SDK environment now instead.
 At this point, we suggest restarting your terminal and doing the following:
 
 ```
-export AWS_FPGA_DIR=/home/centos/src/project_data
-source $AWS_FPGA_DIR/aws-fpga/sdk_setup.sh
+export AWS_FPGA_DIR=/home/centos/src/project_data/aws-fpga
+source $AWS_FPGA_DIR/sdk_setup.sh
+export AOS_DIR=$AWS_FPGA_DIR/../amorphos
 ```
 
 Before we can build the AmorphOS Host Scheduler, we need to make minor modifications to the aws-fpga source code. The reason we do this
@@ -97,8 +99,8 @@ the changes are listed as a git diff, but are only 4 lines of modifications you 
 compile the AmorphOS Host Scheduler. The two files are:
 
 ```
-$AWS_FPGA_DIR/aws-fpga/sdk/userspace/fpga_libs/fpga_dma/fpga_dma_utils.c
-$AWS_FPGA_DIR/aws-fpga/sdk/userspace/include/fpga_dma.h
+$AWS_FPGA_DIR/sdk/userspace/fpga_libs/fpga_dma/fpga_dma_utils.c
+$AWS_FPGA_DIR/sdk/userspace/include/fpga_dma.h
 ```
 
 Here is the diff:
@@ -153,7 +155,7 @@ index 72f7ec1..42f9d04 100644
 After those two files have been modified, do the following:
 
 ```
-cd $AWS_FPGA_DIR/amorphos/src/host/scheduler
+cd $AOS_DIR/src/host/scheduler
 make
 ```
 
@@ -177,8 +179,8 @@ The host scheduler must be run with root privileges. The two command line argume
 in this example) and the FULL PATH to the fpga_images.json file we just modified.
 
 ```
-cd $AWS_FPGA_DIR/amorphos/src/host/scheduler
-sudo ./aos_host_sched 1 $AWS_FPGA_DIR/amorphos/src/host/scheduler/fpga_images.json
+cd $AOS_DIR/src/host/scheduler
+sudo ./aos_host_sched 1 $AOS_DIR/src/host/scheduler/fpga_images.json
 ```
 
 The scheduler should display visual output to let you know it started successfully.
@@ -188,7 +190,7 @@ The scheduler should display visual output to let you know it started successful
 Now we need to build MemDrive host side application:
 
 ```
-cd $AWS_FPGA_DIR/amorphos/example/memdrive/
+cd $AOS_DIR/example/memdrive/
 make
 ```
 
@@ -200,7 +202,7 @@ With the AmorphOS Host Scheduler running, we can now run run the memdrive_client
 MemDrive application on the FPGA. The example uses a single executable to control all  the instances, but this is not required.
 
 ```
-cd $AWS_FPGA_DIR/amorphos/example/memdrive/
+cd $AOS_DIR/example/memdrive/
 ./memdrive_client
 ```
 
