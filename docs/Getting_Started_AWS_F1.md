@@ -46,6 +46,12 @@ The F1 build process requires the CL_DIR environment variable to be set:
 export CL_DIR=$AWS_FPGA_DIR/hdk/cl/developer_designs/cl_aos
 ```
 
+Additionally, we need to specify the source code for the cross-platform portion of AmorphOS as well as the F1 specific components:
+
+```
+export AOS_SRC=$AOS_DIR/src/fpga/src
+export F1_SRC=$AOS_DIR//src/system/f1/src
+```
 
 ## Build the bitstream/Upload it to S3
 
