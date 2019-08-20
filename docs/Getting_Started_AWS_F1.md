@@ -50,7 +50,7 @@ Additionally, we need to specify the source code for the cross-platform portion 
 
 ```
 export AOS_SRC=$AOS_DIR/src/fpga/src
-export F1_SRC=$AOS_DIR//src/system/f1/src
+export F1_SRC=$AOS_DIR/src/system/f1/src
 ```
 
 ## Build the bitstream/Upload it to S3
