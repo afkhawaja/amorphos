@@ -37,7 +37,7 @@ int main(int argc, char **argv) {
         client_handle[i]->aos_cntrlreg_write(0x28, addr_delta);
         client_handle[i]->aos_cntrlreg_write(0x30, canary0);
         client_handle[i]->aos_cntrlreg_write(0x38, canary1);
-	}
+    }
 
     // Read back runtime
     uint64_t start_cycle;
