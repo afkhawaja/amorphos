@@ -45,7 +45,7 @@ int main(int argc, char **argv) {
 
     client_handle.aos_end_session();
 
-    printf("Memdrive client exited normally\n");
+    printf("========= MemDrive Successfully Run =========");
 
     return 0;
 
