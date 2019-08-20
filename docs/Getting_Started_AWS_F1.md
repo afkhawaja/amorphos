@@ -67,6 +67,10 @@ Launch the  build process:
 cd $CL_DIR/build/scripts
 ./aws_build_dcp_from_cl.sh -strategy CONGESTION
 ```
+
+The F1 build process provides a few compilation strategies when building the FPGA image. Here we use the congestion strategy as there
+is a lot of routing pressure due to AmorphOS needing to provide each instance of an application with the full interface. 
+
 In the current directory, you will now see a time stamped file ending in .nohup.out, which you can use to check the status of your
 build. You will see a message like this when the build is complete:
 
