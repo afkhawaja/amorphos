@@ -207,5 +207,5 @@ cd $AWS_FPGA_DIR/amorphos/example/memdrive/
 If everything ran successfully, you should see the following:
 
 ```
-====== MemDrive Successfully Run =========
+========= MemDrive Successfully Run =========
 ```
