@@ -1,0 +1,44 @@
+{
+    "images" : [
+        {
+            "description" : "8 MemDrive",
+            "afi" :  "afi-XXXXXXXXXXXXX",
+            "agfi" : "agfi-YYYYYYYYYYYY",
+            "num_slots" : 8,
+            "slots" : [
+                {
+                    "slot_id" : 0,
+                    "app_id" : "memdrive_v0"
+                },
+                {
+                    "slot_id" : 1,
+                    "app_id" : "memdrive_v0"
+                },
+                {
+                    "slot_id" : 2,
+                    "app_id" : "memdrive_v0"
+                },
+                {
+                    "slot_id" : 3,
+                    "app_id" : "memdrive_v0"
+                },
+                {
+                    "slot_id" : 4,
+                    "app_id" : "memdrive_v0"
+                },
+                {
+                    "slot_id" : 5,
+                    "app_id" : "memdrive_v0"
+                },
+                                {
+                    "slot_id" : 6,
+                    "app_id" : "memdrive_v0"
+                },
+                {
+                    "slot_id" : 7,
+                    "app_id" : "memdrive_v0"
+                }
+            ]
+        }
+    ]
+}
