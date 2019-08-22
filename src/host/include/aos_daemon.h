@@ -511,8 +511,8 @@ public:
         // BAR 4
         attach_pci_bar4(pcie_slot_id);
         // XDMA channels
-        attach_xdma_write(pcie_slot_id);
-        attach_xdma_read(pcie_slot_id);
+        //attach_xdma_write(pcie_slot_id);
+        //attach_xdma_read(pcie_slot_id);
 
         // Mark interfaces as enabled
         interfaces_enabled[pcie_slot_id] = true;
@@ -526,8 +526,8 @@ public:
         // BAR 4
         detach_pci_bar4(fpga_id);
         // XDMA Channels
-        detach_xdma_write(fpga_id);
-        detach_xdma_read(fpga_id);
+        //detach_xdma_write(fpga_id);
+        //detach_xdma_read(fpga_id);
 
         // Mark interfaces as disabled
         interfaces_enabled[fpga_id] = false;
@@ -627,6 +627,7 @@ public:
         assert(bar1_attached[fpga_id]);
         int rc = fpga_pci_detach(pci_bar1_handle[fpga_id]);
         fail_on(rc, out, "Unable detach pci_bar1 from the FPGA");
+        bar1_attached[fpga_id] = false;
         return rc;
         out:
             return 1;
@@ -636,6 +637,7 @@ public:
         assert(bar4_attached[fpga_id]);
         int rc = fpga_pci_detach(pci_bar4_handle[fpga_id]);
         fail_on(rc, out, "Unable detach pci_bar4 from the FPGA");
+        bar4_attached[fpga_id] = false;
         return rc;
         out:
             return 1;
@@ -1017,6 +1019,8 @@ private:
             }
         }
         // Return the image corresponding to that index
+        std::cout << " Found replacement image, id:" << selected_idx << std::endl;
+        std::cout << std::flush;
         return sched->getImageByIdx(selected_idx);
     }
 
@@ -1085,6 +1089,10 @@ private:
             return true;
         }
 
+        std::cout << std::endl << "================================== Inside handleScheduling , trying to schedule session: " << session_id << std::endl;
+        std::cout << std::flush;
+        dumpSchedulerState();
+
         aos_app_session * const session_ptr = sessions[session_id];
         std::string desired_app_id = session_ptr->getAppId();
 
@@ -1120,12 +1128,14 @@ private:
         }
 
         if (empty_fpga_found) {
+        	std::cout << "Empty FPGA found, fpga id: " << fpga_id_to_use << " ,trying to schedule app: " << desired_app_id << std::endl;
+        	std::cout << std::flush;
             auto & newImage = getReplacementImage(desired_app_id);
             switchImage(fpga_id_to_use, newImage);
-            return true;
+            //return true;
         }
 
-        // 2 & 3) No Empty FPGA was found
+        // 2 & 3) No Empty FPGA was found or we just loaded the image we needed!
         uint64_t max_load = ~0x0;
         bool matching_slot_found = false;
         bool matching_empty_slot_found = false;
@@ -1136,7 +1146,7 @@ private:
             const uint64_t fpga_load = calcFPGALoad(fpga_id);
             auto & slot_appid_map_ = slot_appid_map[fpga_id];
             auto & slot_session_map_ = slot_session_map[fpga_id];
-            const uint64_t num_slots = slot_session_map.size();
+            const uint64_t num_slots = slot_session_map_.size();
             // First see if we can find a slot that both app id matches and is empty
             for (uint64_t slot_id = 0; slot_id < num_slots; slot_id++) {
                 if (slot_appid_map_[slot_id] == desired_app_id) {
@@ -1185,9 +1195,13 @@ private:
         } // fpga loop
 
         if (matching_empty_slot_found) {
+        	std::cout << "Matching slot found, binding app to the slot " << slot_id_to_use << " on FPGA ID: " << fpga_id_to_use << std::endl;
+        	std::cout << std::flush;
             bindAppToSlot(session_id, fpga_id_to_use, slot_id_to_use);
             return true;
         } else if (matching_slot_found) {
+        	std::cout << "No matching slot found! Need to unbind an app" << std::endl;
+        	std::cout << std::flush;
             // swap out the old session
             unbindAppFromSlot(fpga_id_to_use, slot_id_to_use);
             // Reset the app slot on the FPGA
@@ -1199,6 +1213,9 @@ private:
         }
 
         // 4) No FPGA can accomidate the app_id, and we need to flash a new image onto one
+        std::cout << "No matching FPGA slot found, looking for replacement" << std::endl;
+        std::cout << std::flush;
+
         uint64_t victim_fpga_id = ~0x0;
         max_load = ~0x0;
 

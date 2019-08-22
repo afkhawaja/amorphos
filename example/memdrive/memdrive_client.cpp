@@ -47,9 +47,9 @@ int main(int argc, char **argv) {
         client_handle[i]->aos_cntrlreg_read(0x00ULL, start_cycle);
         client_handle[i]->aos_cntrlreg_read(0x08ULL, end_cycle);
 
-        printf("Memdrive app %ld start cycle: %ld\n", i, start_cycle);
-        printf("Memdrive app %ld end cycle: %ld\n", i, end_cycle);
-        printf("Memdrive app %ld runtime: %ld\n"  , i, (end_cycle - start_cycle));
+        printf("Memdrive app %ld start cycle: %x\n", i, start_cycle);
+        printf("Memdrive app %ld end cycle: %x\n", i, end_cycle);
+        printf("Memdrive app %ld runtime: %x\n"  , i, (end_cycle - start_cycle));
 
     }
 
@@ -57,7 +57,7 @@ int main(int argc, char **argv) {
         client_handle[i]->aos_end_session();
     }
 
-    printf("========= MemDrive Successfully Run =========");
+    printf("========= MemDrive Successfully Run =========\n");
 
     return 0;
 
