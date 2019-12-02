@@ -139,6 +139,34 @@ endgenerate
     SoftRegResp softreg_resp_to_axil2sr;
     logic       softreg_resp_grant_from_axil2sr;  
 
+    // AmorphOS to apps SoftReg
+	SoftRegReq					 app_softreg_req[F1_NUM_APPS-1:0];
+	SoftRegResp					 app_softreg_resp[F1_NUM_APPS-1:0];
+    
+    // SoftReg signals that could be generated internally by AmorphOS
+    SoftRegReq  softreg_req_from_aos_internal[F1_NUM_APPS-1:0]; // will connect to the AMICombiner (maybe other things)
+    SoftRegReq  softreg_req_from_aos_host[F1_NUM_APPS-1:0];
+
+    SoftRegResp softreg_resp_to_aos[F1_NUM_APPS-1:0];
+
+    generate
+        for (app_num = 0; app_num < F1_NUM_APPS; app_num = app_num + 1) begin : gen_softreg_combiner
+            SoftRegCombiner
+            sr_combiner
+            (
+                // General Signals
+                .clk(global_clk),
+                .rst(global_rst),
+                // Soft register interface
+                .softreg_req_from_aos_internal(softreg_req_from_aos_internal[app_num]),
+                .softreg_req_from_aos_host(softreg_req_from_aos_host[app_num]),
+                .softreq_req_to_app(app_softreg_req[app_num]),
+                .softreg_resp_from_app(app_softreg_resp[app_num]),
+                .softreq_resp_to_aos(softreg_resp_to_aos[app_num])   
+            );
+        end
+    end
+     
 	generate
 		if (F1_AXIL_USE_EXTENDER == 1) begin : extender_axil2sr
 			AXIL2SR_Extended
@@ -228,10 +256,6 @@ endgenerate
 			);
 		end
 	endgenerate
-
-	// AmorphOS to apps
-	SoftRegReq					 app_softreg_req[F1_NUM_APPS-1:0];
-	SoftRegResp					 app_softreg_resp[F1_NUM_APPS-1:0];		
 
 	// MemDrive connectors
 	AMIRequest                   md_mem_reqs        [1:0];
@@ -337,8 +361,8 @@ endgenerate
 					.softreg_req(softreg_req_from_axil2sr),
 					.softreg_resp(softreg_resp_to_axil2sr),
 					// Virtualized interface each app
-					.app_softreg_req(app_softreg_req),
-					.app_softreg_resp(app_softreg_resp)
+					.app_softreg_req(softreg_req_from_aos_host),
+					.app_softreg_resp(softreg_resp_to_aos)
 				);
 			end else begin : sr_with_tree
 				AmorphOSSoftReg_RouteTree #(.SR_NUM_APPS(F1_NUM_APPS)) amorphos_softreg_inst_route_tree
@@ -351,8 +375,8 @@ endgenerate
 					.softreg_req(softreg_req_from_axil2sr),
 					.softreg_resp(softreg_resp_to_axil2sr),
 					// Virtualized interface each app
-					.app_softreg_req(app_softreg_req),
-					.app_softreg_resp(app_softreg_resp)
+					.app_softreg_req(softreg_req_from_aos_host),
+					.app_softreg_resp(softreg_resp_to_aos)
 				);
 			end
 			// has to accept it, SW makes sure it isn't swamped
@@ -375,6 +399,13 @@ AMIRequest                   ami2_ami2axi4_req_out        [F1_NUM_MEM_CHANNELS-1
 wire                         ami2_ami2axi4_req_grant_in   [F1_NUM_MEM_CHANNELS-1:0];
 AMIResponse                  ami2_ami2axi4_resp_in        [F1_NUM_MEM_CHANNELS-1:0];
 logic                        ami2_ami2axi4_resp_grant_out [F1_NUM_MEM_CHANNELS-1:0];
+
+// AmorphOS connectors for internally generated memory requests
+AMIRequest                   mem_reqs_aos_internal[F1_NUM_APPS-1:0][AMI_NUM_PORTS-1:0];
+wire                         mem_req_grants_internal[F1_NUM_APPS-1:0][AMI_NUM_PORTS-1:0];
+AMIResponse                  mem_resps_internal[F1_NUM_APPS-1:0][AMI_NUM_PORTS-1:0];
+wire                         mem_resp_grants_internal[F1_NUM_APPS-1:0][AMI_NUM_PORTS-1:0];
+
 
 // AmorphOSMem
 genvar ami_num;
