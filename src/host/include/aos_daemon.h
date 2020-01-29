@@ -536,9 +536,9 @@ public:
 
     int fpga_init() {
         /* initialize the fpga_pci library so we could have access to FPGA PCIe from this applications */
-        int rc = fpga_pci_init();
-        fail_on(rc, out, "Unable to initialize the fpga_pci library");
-        printf("fpga_pci library intialized correctly\n");
+        int rc = fpga_mgmt_init();
+        fail_on(rc, out, "Unable to initialize the fpga_mgmt library");
+        printf("fpga_mgmt library intialized correctly\n");
         return rc;
         out:
             return 1;

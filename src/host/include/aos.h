@@ -292,6 +292,29 @@ public:
         return aos_errcode::SUCCESS;
     }
 
+    aos_errcode aos_quiesce_request() {
+        aos_errcode errorcode = aos_cntrlreg_write(0x1FF8, 1);  // TODO: maybe not hardcode in these addresses
+        return errorcode;
+    }
+    
+    aos_errcode aos_quiesce_check(bool & quiesced) {
+        uint64_t quiesced_val;
+        aos_errcode errorcode = aos_cntrlreg_read(0x1FF0, quiesced_val);
+        if (errorcode != aos_errcode::SUCCESS) {
+            return errorcode;
+        }
+        
+        if (quiesced_val == 0) {
+            quiesced = false;
+        } else if (quiesced_val == 1) {
+            quiesced = true;
+        } else {
+            return aos_errcode::UNKNOWN_FAILURE;
+        }
+        
+        return errorcode;
+    }
+
     aos_errcode aos_bulkdata_read(uint64_t addr, size_t numBytes, void * buf) {
         assert(intialized);
         // Open the socket
