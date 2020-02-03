@@ -46,7 +46,19 @@ module MemDrive_SoftReg
         end else begin
             read_resp_credit_cnt <= new_read_resp_credit_cnt;
         end
-    end    
+    end
+
+    // Quiescence
+    reg quiescence_requested;
+    logic incoming_req_is_quiesce;
+
+    always @(posedge clk) begin
+        if (rst) begin
+            quiescence_requested <= 1'b0;
+        end else if (incoming_req_is_quiesce) begin
+            quiescence_requested <= 1'b1;
+        end
+    end
 
     // Input queue for PCI-e
     wire             sr_inQ_empty;
@@ -76,10 +88,14 @@ module MemDrive_SoftReg
 
     // Connections to softreg input interface
     assign sr_inQ_in   = softreg_req;
-    assign sr_inQ_enq  = softreg_req.valid && (softreg_req.isWrite == 1'b1) && !sr_inQ_full;
+    assign sr_inQ_enq  = softreg_req.valid && (softreg_req.isWrite == 1'b1) && (softreg_req.addr != 32'h0000_1FF8) && !sr_inQ_full;
     
     logic  incoming_req_is_read;
-    assign incoming_req_is_read = softreg_req.valid && (softreg_req.isWrite == 1'b0);
+    assign incoming_req_is_read = softreg_req.valid && (softreg_req.isWrite == 1'b0) && (softreg_req.addr != 32'h0000_1FF0);
+
+    assign incoming_req_is_quiesce = softreg_req.valid && (softreg_req.isWrite == 1'b1) && (softreg_req.addr == 32'h0000_1FF8);
+    logic send_quiesced_response;
+    assign send_quiesced_response = softreg_req.valid && (softreg_req.isWrite == 1'b0) && (softreg_req.addr == 32'h0000_1FF0);
     
     always_comb begin
         new_read_resp_credit_cnt = read_resp_credit_cnt;
@@ -346,7 +362,11 @@ module MemDrive_SoftReg
     
     logic  enough_sr_resp_credits;
     assign enough_sr_resp_credits = (read_resp_credit_cnt != 32'h0000_0000);
-    
+
+    logic[63:0] quiesced;
+
+    assign quiesced = (current_state == IDLE) && quiescence_requested;  // Make sure quiescence signal being sent
+
     // FSM update logic
     always_comb begin
         next_state = current_state;
@@ -374,6 +394,11 @@ module MemDrive_SoftReg
         reset_errors = 1'b0;
         decr_read_resp_credit_cnt = 1'b0;
 		end_cycle_we = 1'b0;
+
+        // Respond to check_quiesce request (as long as start or end_cycle hasn't been requested)
+        if (send_quiesced_response && !enough_sr_resp_credits) begin
+            softreg_resp = '{valid: 1'b1, data: quiesced};
+        end
         
         case (current_state)
             IDLE : begin

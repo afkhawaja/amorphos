@@ -18,6 +18,14 @@ int main(int argc, char **argv) {
         }
     }
 
+    // Check if quiesced before requesting (answer should be no)
+    bool quiesced[num_instances];
+    for (uint64_t i = 0; i < num_instances; i++) {
+        client_handle[i]->aos_quiesce_check(quiesced[i]);
+        printf("Prior to quiescence request, memdrive app %ld is%squiesced \n", i, quiesced[i] ? " " : " not ");
+    }
+
+
     // Program Mem Drive
     uint64_t start_addr0 = 0x0;
     uint64_t total_subs  = 0x15;
@@ -39,6 +47,12 @@ int main(int argc, char **argv) {
         client_handle[i]->aos_cntrlreg_write(0x38, canary1);
     }
 
+    for (uint64_t i = 0; i < num_instances; i++) {
+        client_handle[i]->aos_quiesce_request();
+        client_handle[i]->aos_quiesce_check(quiesced[i]);
+        printf("Immediately after quiescence request, memdrive app %ld is%squiesced \n", i, quiesced[i] ? " " : " not ");
+    }
+
     // Read back runtime
     uint64_t start_cycle;
     uint64_t end_cycle;
@@ -51,6 +65,11 @@ int main(int argc, char **argv) {
         printf("Memdrive app %ld end cycle: %x\n", i, end_cycle);
         printf("Memdrive app %ld runtime: %x\n"  , i, (end_cycle - start_cycle));
 
+    }
+
+    for (uint64_t i = 0; i < num_instances; i++) {
+        client_handle[i]->aos_quiesce_check(quiesced[i]);
+        printf("After getting start and end cycle, memdrive app %ld is%squiesced \n", i, quiesced[i] ? " " : " not ");
     }
 
     for (uint64_t i = 0; i < num_instances; i++) {
