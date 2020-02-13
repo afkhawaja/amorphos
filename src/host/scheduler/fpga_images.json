@@ -2,8 +2,8 @@
     "images" : [
         {
             "description" : "8 MemDrive",
-            "afi" :  "afi-06e32359e75f58072",
-            "agfi" : "agfi-0426dbf529ee682ba",
+            "afi" :  "afi-06209ae5a2467ae97",
+            "agfi" : "agfi-0a62e9bcd309ed761",
             "num_slots" : 8,
             "slots" : [
                 {
