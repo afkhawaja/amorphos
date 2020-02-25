@@ -162,20 +162,20 @@ module QuiescenceApp_SoftReg
     assign slot7_quiescence_req.data = 64'b1;
 
     // Quiescence response registers
-    reg[63:0]  quiescence_check_result;
-    reg[63:0]  new_quiescence_check_result;
-    logic      quiescence_check_result_we;
-
-    // Quiescence response update
-    always@(posedge clk) begin : response_value_update
-        if (rst) begin
-            quiescence_check_result <= 64'h0;
-        end else begin
-            if (quiescence_check_result_we) begin
-                quiescence_check_result <= new_quiescence_check_result;
-            end
-        end
-    end
+    //reg[63:0]  quiescence_check_result;
+    //reg[63:0]  new_quiescence_check_result;
+    //logic      quiescence_check_result_we;
+    //
+    //// Quiescence response update
+    //always@(posedge clk) begin : response_value_update
+    //    if (rst) begin
+    //        quiescence_check_result <= 64'h0;
+    //    end else begin
+    //        if (quiescence_check_result_we) begin
+    //            quiescence_check_result <= new_quiescence_check_result;
+    //        end
+    //    end
+    //end
 
     // FSM update logic
     always_comb begin
@@ -186,8 +186,8 @@ module QuiescenceApp_SoftReg
         curr_qresp_slot_we = 1'b0;
         reset_curr_qresp_slot = 1'b0;
 
-        quiescence_check_result_we = 1'b0;
-        new_quiescence_check_result = quiescence_check_result;
+        //quiescence_check_result_we = 1'b0;
+        //new_quiescence_check_result = quiescence_check_result;
         
         case (current_state)
             IDLE : begin
@@ -219,9 +219,11 @@ module QuiescenceApp_SoftReg
                 case (curr_qresp_slot)
                   SLOT0_ADDR : begin
                       if (slot0_quiescence_resp.valid) begin
-                          new_quiescence_check_result = slot0_quiescence_resp.data;
-                          quiescence_check_result_we = 1'b1;
-                          next_state = SEND_RESP;
+                          //new_quiescence_check_result = slot0_quiescence_resp.data;
+                          //quiescence_check_result_we = 1'b1;
+                          //next_state = SEND_RESP;
+                          softreg_resp = '{valid: 1'b1, data: slot0_quiescence_resp.data};
+                          next_state = DELIV_REQS;
                       // Wait until we can return a valid response
                       end else begin
                           next_state = AWAIT_RESP;
@@ -229,63 +231,77 @@ module QuiescenceApp_SoftReg
                   end
                   SLOT1_ADDR : begin
                       if (slot1_quiescence_resp.valid) begin
-                          new_quiescence_check_result = slot1_quiescence_resp.data;
-                          quiescence_check_result_we = 1'b1;
-                          next_state = SEND_RESP;
+                          //new_quiescence_check_result = slot1_quiescence_resp.data;
+                          //quiescence_check_result_we = 1'b1;
+                          //next_state = SEND_RESP;
+                          softreg_resp = '{valid: 1'b1, data: slot1_quiescence_resp.data};
+                          next_state = DELIV_REQS;
                       end else begin
                           next_state = AWAIT_RESP;
                       end
                   end
                   SLOT2_ADDR : begin
                       if (slot2_quiescence_resp.valid) begin
-                          new_quiescence_check_result = slot2_quiescence_resp.data;
-                          quiescence_check_result_we = 1'b1;
-                          next_state = SEND_RESP;
+                          //new_quiescence_check_result = slot2_quiescence_resp.data;
+                          //quiescence_check_result_we = 1'b1;
+                          //next_state = SEND_RESP;
+                          softreg_resp = '{valid: 1'b1, data: slot2_quiescence_resp.data};
+                          next_state = DELIV_REQS;
                       end else begin
                           next_state = AWAIT_RESP;
                       end
                   end
                   SLOT3_ADDR : begin
                       if (slot3_quiescence_resp.valid) begin
-                          new_quiescence_check_result = slot3_quiescence_resp.data;
-                          quiescence_check_result_we = 1'b1;
-                          next_state = SEND_RESP;
+                          //new_quiescence_check_result = slot3_quiescence_resp.data;
+                          //quiescence_check_result_we = 1'b1;
+                          //next_state = SEND_RESP;
+                          softreg_resp = '{valid: 1'b1, data: slot3_quiescence_resp.data};
+                          next_state = DELIV_REQS;
                       end else begin
                           next_state = AWAIT_RESP;
                       end
                   end
                   SLOT4_ADDR : begin
                       if (slot4_quiescence_resp.valid) begin
-                          new_quiescence_check_result = slot4_quiescence_resp.data;
-                          quiescence_check_result_we = 1'b1;
-                          next_state = SEND_RESP;
+                          //new_quiescence_check_result = slot4_quiescence_resp.data;
+                          //quiescence_check_result_we = 1'b1;
+                          //next_state = SEND_RESP;
+                          softreg_resp = '{valid: 1'b1, data: slot4_quiescence_resp.data};
+                          next_state = DELIV_REQS;
                       end else begin
                           next_state = AWAIT_RESP;
                       end
                   end
                   SLOT5_ADDR : begin
                       if (slot5_quiescence_resp.valid) begin
-                          new_quiescence_check_result = slot5_quiescence_resp.data;
-                          quiescence_check_result_we = 1'b1;
-                          next_state = SEND_RESP;
+                          //new_quiescence_check_result = slot5_quiescence_resp.data;
+                          //quiescence_check_result_we = 1'b1;
+                          //next_state = SEND_RESP;
+                          softreg_resp = '{valid: 1'b1, data: slot5_quiescence_resp.data};
+                          next_state = DELIV_REQS;
                       end else begin
                           next_state = AWAIT_RESP;
                       end
                   end
                   SLOT6_ADDR : begin
                       if (slot6_quiescence_resp.valid) begin
-                          new_quiescence_check_result = slot6_quiescence_resp.data;
-                          quiescence_check_result_we = 1'b1;
-                          next_state = SEND_RESP;
+                          //new_quiescence_check_result = slot6_quiescence_resp.data;
+                          //quiescence_check_result_we = 1'b1;
+                          //next_state = SEND_RESP;
+                          softreg_resp = '{valid: 1'b1, data: slot6_quiescence_resp.data};
+                          next_state = DELIV_REQS;
                       end else begin
                           next_state = AWAIT_RESP;
                       end
                   end
                   SLOT7_ADDR : begin
                       if (slot7_quiescence_resp.valid) begin
-                          new_quiescence_check_result = slot7_quiescence_resp.data;
-                          quiescence_check_result_we = 1'b1;
-                          next_state = SEND_RESP;
+                          //new_quiescence_check_result = slot7_quiescence_resp.data;
+                          //quiescence_check_result_we = 1'b1;
+                          //next_state = SEND_RESP;
+                          softreg_resp = '{valid: 1'b1, data: slot7_quiescence_resp.data};
+                          next_state = DELIV_REQS;
                       end else begin
                           next_state = AWAIT_RESP;
                       end
@@ -298,10 +314,10 @@ module QuiescenceApp_SoftReg
                   end
                 endcase // case (curr_qresp_slot)
             end
-            SEND_RESP : begin
-                softreg_resp = '{valid: 1'b1, data: quiescence_check_result};
-                next_state = DELIV_REQS;
-            end
+            //SEND_RESP : begin
+            //    softreg_resp = '{valid: 1'b1, data: quiescence_check_result};
+            //    next_state = DELIV_REQS;
+            //end
             default : begin
                 next_state = current_state;
             end
