@@ -14,6 +14,10 @@ module QuiescenceApp_SoftReg
     input  SoftRegReq                   softreg_req,
     output SoftRegResp                  softreg_resp,
 
+    // Quiescence interface for this app
+    input  QuiescenceReq                quiescence_req,
+    output QuiescenceResp               quiescence_resp,
+
     // Connections to other apps
     output QuiescenceReq                slot0_quiescence_req,
     input  QuiescenceResp               slot0_quiescence_resp,
@@ -74,6 +78,7 @@ module QuiescenceApp_SoftReg
         .increment       (1'b1), // clock is always incrementing
         .count           (clk_counter)
     );
+
         
     // FSM states
     parameter IDLE        = 4'b0000;
@@ -323,5 +328,28 @@ module QuiescenceApp_SoftReg
             end
         endcase
     end
-    
+
+
+    // Deal with quiescence for this app
+    // Quiescence registers
+    reg   quiescence_requested;
+    logic incoming_qreq_is_quiesce;
+
+    assign incoming_qreq_is_quiesce = quiescence_req.valid && quiescence_req.isRequest;
+    always@(posedge clk) begin
+        if (rst) begin
+            quiescence_requested <= 1'b0;
+        end else begin
+            if (incoming_qreq_is_quiesce) begin
+                quiescence_requested <= 1'b1;
+            end
+        end
+    end
+
+    //logic[63:0] quiesced;
+    // TODO: determine if this can be true (will sending requests to this app to check q state mean that it never quiesces?)
+    //       can maybe do something with srcApp
+    assign quiescence_resp.data = sr_inQ_empty && ((current_state == IDLE) || (current_state == DELIV_REQS));  // the app is quiesced when all requests have been dealt with
+    assign quiescence_resp.valid = 1'b1;  // Quiescence response is always valid
+        
 endmodule
