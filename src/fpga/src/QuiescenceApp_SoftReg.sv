@@ -113,7 +113,6 @@ module QuiescenceApp_SoftReg
     parameter NOSLOT_ADDR   = 64'h40;
     
     // Quiescence client registers
-    //reg[2:0] curr_qresp_slot;
     reg[63:0] curr_qresp_slot;
     logic curr_qresp_slot_we;
     logic reset_curr_qresp_slot;
@@ -124,45 +123,14 @@ module QuiescenceApp_SoftReg
             curr_qresp_slot <= NOSLOT_ADDR;
         end else begin
             if (curr_qresp_slot_we) begin
-                //case (sr_inQ_out.addr)
-                //    SLOT0_ADDR : begin
-                //        curr_qresp_slot <= 3'b000;
-                //    end
-                //    SLOT1_ADDR : begin
-                //        curr_qresp_slot <= 3'b001;
-                //    end
-                //    SLOT2_ADDR : begin
-                //        curr_qresp_slot <= 3'b010;
-                //    end
-                //    SLOT3_ADDR : begin
-                //        curr_qresp_slot <= 3'b011;
-                //    end
-                //    SLOT4_ADDR : begin
-                //        curr_qresp_slot <= 3'b100;
-                //    end
-                //    SLOT5_ADDR : begin
-                //        curr_qresp_slot <= 3'b101;
-                //    end
-                //    SLOT6_ADDR : begin
-                //        curr_qresp_slot <= 3'b110;
-                //    end
-                //    SLOT7_ADDR : begin
-                //        curr_qresp_slot <= 3'b111;
-                //    end
-                //    default : begin
-                //    end
-                //endcase
                 curr_qresp_slot <= sr_inQ_out.addr;
-            //end else begin  // TODO: get rid of this (starting from else)
-            //    curr_qresp_slot <= curr_qresp_slot;
-            //end
             end // if (curr_qresp_slot_we)
         end // else: !if(rst)
     end // block: qreq_slot_update
 
     // Notify client app of any quiescence requests or checks
     assign slot0_quiescence_req.valid = ((current_state == DELIV_REQS) && (sr_inQ_out.addr == SLOT0_ADDR) && sr_inQ_out.valid) || ((current_state == AWAIT_RESP) && (curr_qresp_slot == SLOT0_ADDR));
-    assign slot0_quiescence_req.isRequest = (current_state == DELIV_REQS) && sr_inQ_out.isWrite;// || (current_state == AWAIT_RESP);
+    assign slot0_quiescence_req.isRequest = (current_state == DELIV_REQS) && sr_inQ_out.isWrite;
     assign slot0_quiescence_req.data = 64'b1;
 
     assign slot1_quiescence_req.valid = ((current_state == DELIV_REQS) && (sr_inQ_out.addr == SLOT1_ADDR) && sr_inQ_out.valid) || ((current_state == AWAIT_RESP) && (curr_qresp_slot == SLOT1_ADDR));
@@ -209,10 +177,6 @@ module QuiescenceApp_SoftReg
         end
     end
 
-    //logic[63:0] quiesced;
-
-    //assign quiesced = (current_state == IDLE) && quiescence_requested;  // Make sure quiescence signal being sent
-
     // FSM update logic
     always_comb begin
         next_state = current_state;
@@ -224,11 +188,6 @@ module QuiescenceApp_SoftReg
 
         quiescence_check_result_we = 1'b0;
         new_quiescence_check_result = quiescence_check_result;
-
-        // Respond to check_quiesce request (as long as start or end_cycle hasn't been requested)
-        //if (send_quiesced_response && !enough_sr_resp_credits) begin
-        //    softreg_resp = '{valid: 1'b1, data: quiesced};
-        //end
         
         case (current_state)
             IDLE : begin
