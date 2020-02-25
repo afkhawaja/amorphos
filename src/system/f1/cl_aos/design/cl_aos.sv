@@ -292,8 +292,8 @@ endgenerate
             .softreg_resp(softreg_resp_to_axil2sr),
 
             // Quiescence interface
-            .quiescence_req(app_quiescence_req[app_num]),
-            .quiescence_resp(app_quiescence_resp[app_num])
+            .quiescence_req(),  // unused
+            .quiescence_resp()  // unused
          );
          
          // has to accept it, SW makes sure it isn't swamped
