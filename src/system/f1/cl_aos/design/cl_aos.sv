@@ -230,8 +230,12 @@ endgenerate
    endgenerate
 
    // AmorphOS to apps
-   SoftRegReq                  app_softreg_req[F1_NUM_APPS-1:0];
-   SoftRegResp                 app_softreg_resp[F1_NUM_APPS-1:0];      
+   SoftRegReq                  app_softreg_req  [F1_NUM_APPS-1:0];
+   SoftRegResp                 app_softreg_resp [F1_NUM_APPS-1:0];
+
+   // QuiescenceApp connectors
+   QuiescenceReq               app_quiescence_req  [F1_NUM_APPS-1:0];
+   QuiescenceResp              app_quiescence_resp [F1_NUM_APPS-1:0];
 
    // MemDrive connectors
    AMIRequest                   md_mem_reqs        [1:0];
@@ -285,7 +289,11 @@ endgenerate
 
             // Soft register interface
             .softreg_req(softreg_req_from_axil2sr),
-            .softreg_resp(softreg_resp_to_axil2sr)
+            .softreg_resp(softreg_resp_to_axil2sr),
+
+            // Quiescence interface
+            .quiescence_req(app_quiescence_req[app_num]),
+            .quiescence_resp(app_quiescence_resp[app_num])
          );
          
          // has to accept it, SW makes sure it isn't swamped
@@ -866,98 +874,230 @@ endgenerate
 //------------------------------------
 
 generate
+   if (F1_USE_QUIESCENCE_APP == 1) //begin : quiescence_app_inst      
+      if (F1_ALL_APPS_SAME == 1) begin : qapp_all_same /* HERE */
+         QuiescenceApp_SoftReg
+         quiscenceapp_softreg_inst
+         (
+            .clk(global_clk),
+            .rst(global_rst), 
+         
+            .srcApp(1'b0),
+            
+            .softreg_req(app_softreg_req[0]),
+            .softreg_resp(app_softreg_resp[0]),
+            
+            .quiescence_req(app_quiescence_req[0]),
+            .quiescence_resp(app_quiescence_resp[0]),
+            
+            .slot0_quiescence_req(app_quiescence_req[0]),
+            .slot0_quiescence_resp(app_quiescence_resp[0]),
+            .slot1_quiescence_req(app_quiescence_req[1]),
+            .slot1_quiescence_resp(app_quiescence_resp[1]),
+            .slot2_quiescence_req(app_quiescence_req[2]),
+            .slot2_quiescence_resp(app_quiescence_resp[2]),
+            .slot3_quiescence_req(app_quiescence_req[3]),
+            .slot3_quiescence_resp(app_quiescence_resp[3]),
+            .slot4_quiescence_req(app_quiescence_req[4]),
+            .slot4_quiescence_resp(app_quiescence_resp[4]),
+            .slot5_quiescence_req(app_quiescence_req[5]),
+            .slot5_quiescence_resp(app_quiescence_resp[5]),
+            .slot6_quiescence_req(app_quiescence_req[6]),
+            .slot6_quiescence_resp(app_quiescence_resp[6]),
+            .slot7_quiescence_req(app_quiescence_req[7]),
+            .slot7_quiescence_resp(app_quiescence_resp[7])    
+         );
 
-   if (F1_ALL_APPS_SAME == 1) begin
-      for (app_num = 0; app_num < F1_NUM_APPS; app_num = app_num + 1) begin : multi_inst
-         if (F1_CONFIG_APPS == 1) begin : multi_memdrive
-            MemDrive_SoftReg
-            memdrive_softreg_inst
-            (
-               // User clock and reset
-               .clk(global_clk),
-               .rst(global_rst), 
+         for (app_num = 1; app_num < F1_NUM_APPS; app_num = app_num + 1) begin : multi_inst
+            if (F1_CONFIG_APPS == 1) begin : multi_memdrive
+               MemDrive_SoftReg
+               memdrive_softreg_inst
+               (
+                  // User clock and reset
+                  .clk(global_clk),
+                  .rst(global_rst), 
+         
+                  .srcApp(app_num),
+                  
+                  // Simplified Memory interface
+                  .mem_reqs(app_mem_reqs[app_num]),
+                  .mem_req_grants(app_mem_req_grants[app_num]),
+                  .mem_resps(app_mem_resps[app_num]),
+                  .mem_resp_grants(app_mem_resp_grants[app_num]),
+         
+                  // PCIe Slot DMA interface
+                  .pcie_packet_in(dummy_pcie_packet),
+                  .pcie_full_out(),   // unused
+         
+                  .pcie_packet_out(), // unused
+                  .pcie_grant_in(1'b0),
+         
+                  // Soft register interface
+                  .softreg_req(app_softreg_req[app_num]),
+                  .softreg_resp(app_softreg_resp[app_num]),
 
-               .srcApp(app_num),
-               
-               // Simplified Memory interface
-               .mem_reqs(app_mem_reqs[app_num]),
-               .mem_req_grants(app_mem_req_grants[app_num]),
-               .mem_resps(app_mem_resps[app_num]),
-               .mem_resp_grants(app_mem_resp_grants[app_num]),
+                  // Quiescence interface
+                  .quiescence_req(app_quiescence_req[app_num]),
+                  .quiescence_resp(app_quiescence_resp[app_num])
+               );
+            end else if (F1_CONFIG_APPS == 2) begin : multi_dnnweaver
+               DNNDrive_SoftReg
+               #(
+                  .USE_DUMMY(0)
+               )
+               dnndrive_softreg_inst
+               (
+                  // User clock and reset
+                  .clk(global_clk),
+                  .rst(global_rst), 
+         
+                  .srcApp(app_num),
+                  
+                  // Simplified Memory interface
+                  .mem_reqs(app_mem_reqs[app_num]),
+                  .mem_req_grants(app_mem_req_grants[app_num]),
+                  .mem_resps(app_mem_resps[app_num]),
+                  .mem_resp_grants(app_mem_resp_grants[app_num]),
+         
+                  // PCIe Slot DMA interface
+                  .pcie_packet_in(dummy_pcie_packet),
+                  .pcie_full_out(),   // unused
+         
+                  .pcie_packet_out(), // unused
+                  .pcie_grant_in(1'b0),
+         
+                  // Soft register interface
+                  .softreg_req(app_softreg_req[app_num]),
+                  .softreg_resp(app_softreg_resp[app_num])
+               );
+            end else if (F1_CONFIG_APPS == 3) begin : multi_bitcoin
+               BitcoinTop_SoftReg
+               bitcoin_softreg_inst
+               (
+                  // User clock and reset
+                  .clk(global_clk),
+                  .rst(global_rst), 
+         
+                  .srcApp(app_num),
+                  
+                  // Simplified Memory interface
+                  .mem_reqs(app_mem_reqs[app_num]),
+                  .mem_req_grants(app_mem_req_grants[app_num]),
+                  .mem_resps(app_mem_resps[app_num]),
+                  .mem_resp_grants(app_mem_resp_grants[app_num]),
+         
+                  // PCIe Slot DMA interface
+                  .pcie_packet_in(dummy_pcie_packet),
+                  .pcie_full_out(),   // unused
+         
+                  .pcie_packet_out(), // unused
+                  .pcie_grant_in(1'b0),
+         
+                  // Soft register interface
+                  .softreg_req(app_softreg_req[app_num]),
+                  .softreg_resp(app_softreg_resp[app_num])
+               );
+            end // block: multi_bitcoin
+         end // block: multi_inst
+      end else begin : qapp_various_apps // block: qapp_all_same
+          /* TODO: various apps! */
+      end // else: !if(F1_ALL_APPS_SAME == 1)
+   else
+      if (F1_ALL_APPS_SAME == 1) begin
+         for (app_num = 0; app_num < F1_NUM_APPS; app_num = app_num + 1) begin : multi_inst
+            if (F1_CONFIG_APPS == 1) begin : multi_memdrive
+               MemDrive_SoftReg
+               memdrive_softreg_inst
+               (
+                  // User clock and reset
+                  .clk(global_clk),
+                  .rst(global_rst), 
+      
+                  .srcApp(app_num),
+                  
+                  // Simplified Memory interface
+                  .mem_reqs(app_mem_reqs[app_num]),
+                  .mem_req_grants(app_mem_req_grants[app_num]),
+                  .mem_resps(app_mem_resps[app_num]),
+                  .mem_resp_grants(app_mem_resp_grants[app_num]),
+      
+                  // PCIe Slot DMA interface
+                  .pcie_packet_in(dummy_pcie_packet),
+                  .pcie_full_out(),   // unused
+      
+                  .pcie_packet_out(), // unused
+                  .pcie_grant_in(1'b0),
+      
+                  // Soft register interface
+                  .softreg_req(app_softreg_req[app_num]),
+                  .softreg_resp(app_softreg_resp[app_num]),
 
-               // PCIe Slot DMA interface
-               .pcie_packet_in(dummy_pcie_packet),
-               .pcie_full_out(),   // unused
-
-               .pcie_packet_out(), // unused
-               .pcie_grant_in(1'b0),
-
-               // Soft register interface
-               .softreg_req(app_softreg_req[app_num]),
-               .softreg_resp(app_softreg_resp[app_num])
-            );
-         end else if (F1_CONFIG_APPS == 2) begin : multi_dnnweaver
-            DNNDrive_SoftReg
-            #(
-               .USE_DUMMY(0)
-            )
-            dnndrive_softreg_inst
-            (
-               // User clock and reset
-               .clk(global_clk),
-               .rst(global_rst), 
-
-               .srcApp(app_num),
-               
-               // Simplified Memory interface
-               .mem_reqs(app_mem_reqs[app_num]),
-               .mem_req_grants(app_mem_req_grants[app_num]),
-               .mem_resps(app_mem_resps[app_num]),
-               .mem_resp_grants(app_mem_resp_grants[app_num]),
-
-               // PCIe Slot DMA interface
-               .pcie_packet_in(dummy_pcie_packet),
-               .pcie_full_out(),   // unused
-
-               .pcie_packet_out(), // unused
-               .pcie_grant_in(1'b0),
-
-               // Soft register interface
-               .softreg_req(app_softreg_req[app_num]),
-               .softreg_resp(app_softreg_resp[app_num])
-            );
-         end else if (F1_CONFIG_APPS == 3) begin : multi_bitcoin
-            BitcoinTop_SoftReg
-            bitcoin_softreg_inst
-            (
-               // User clock and reset
-               .clk(global_clk),
-               .rst(global_rst), 
-
-               .srcApp(app_num),
-               
-               // Simplified Memory interface
-               .mem_reqs(app_mem_reqs[app_num]),
-               .mem_req_grants(app_mem_req_grants[app_num]),
-               .mem_resps(app_mem_resps[app_num]),
-               .mem_resp_grants(app_mem_resp_grants[app_num]),
-
-               // PCIe Slot DMA interface
-               .pcie_packet_in(dummy_pcie_packet),
-               .pcie_full_out(),   // unused
-
-               .pcie_packet_out(), // unused
-               .pcie_grant_in(1'b0),
-
-               // Soft register interface
-               .softreg_req(app_softreg_req[app_num]),
-               .softreg_resp(app_softreg_resp[app_num])
-            );
-         end
-      end // for
-   end else begin
-
-   end // else: !if(F1_ALL_APPS_SAME == 1)
+                  // Quiescence interface
+                  .quiescence_req(app_quiescence_req[app_num]),
+                  .quiescence_resp(app_quiescence_resp[app_num])
+               );
+            end else if (F1_CONFIG_APPS == 2) begin : multi_dnnweaver
+               DNNDrive_SoftReg
+               #(
+                  .USE_DUMMY(0)
+               )
+               dnndrive_softreg_inst
+               (
+                  // User clock and reset
+                  .clk(global_clk),
+                  .rst(global_rst), 
+      
+                  .srcApp(app_num),
+                  
+                  // Simplified Memory interface
+                  .mem_reqs(app_mem_reqs[app_num]),
+                  .mem_req_grants(app_mem_req_grants[app_num]),
+                  .mem_resps(app_mem_resps[app_num]),
+                  .mem_resp_grants(app_mem_resp_grants[app_num]),
+      
+                  // PCIe Slot DMA interface
+                  .pcie_packet_in(dummy_pcie_packet),
+                  .pcie_full_out(),   // unused
+      
+                  .pcie_packet_out(), // unused
+                  .pcie_grant_in(1'b0),
+      
+                  // Soft register interface
+                  .softreg_req(app_softreg_req[app_num]),
+                  .softreg_resp(app_softreg_resp[app_num])
+               );
+            end else if (F1_CONFIG_APPS == 3) begin : multi_bitcoin
+               BitcoinTop_SoftReg
+               bitcoin_softreg_inst
+               (
+                  // User clock and reset
+                  .clk(global_clk),
+                  .rst(global_rst), 
+      
+                  .srcApp(app_num),
+                  
+                  // Simplified Memory interface
+                  .mem_reqs(app_mem_reqs[app_num]),
+                  .mem_req_grants(app_mem_req_grants[app_num]),
+                  .mem_resps(app_mem_resps[app_num]),
+                  .mem_resp_grants(app_mem_resp_grants[app_num]),
+      
+                  // PCIe Slot DMA interface
+                  .pcie_packet_in(dummy_pcie_packet),
+                  .pcie_full_out(),   // unused
+      
+                  .pcie_packet_out(), // unused
+                  .pcie_grant_in(1'b0),
+      
+                  // Soft register interface
+                  .softreg_req(app_softreg_req[app_num]),
+                  .softreg_resp(app_softreg_resp[app_num])
+               );
+            end
+         end // for
+      end else begin
+      
+      end // else: !if(F1_ALL_APPS_SAME == 1)
 
 endgenerate
 
