@@ -92,6 +92,7 @@ ${AOS_SRC}/ChannelMerge.sv
 ${AOS_SRC}/FourInputArbiter.sv
 ${AOS_SRC}/MemDrive.sv
 ${AOS_SRC}/MemDrive_SoftReg.sv
+${AOS_SRC}/QuiescenceApp_SoftReg.sv
 ${AOS_SRC}/RRWCArbiter.sv
 ${AOS_SRC}/RespMerge.sv
 ${AOS_SRC}/TwoInputArbiter.sv

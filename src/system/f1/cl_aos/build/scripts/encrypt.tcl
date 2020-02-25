@@ -76,6 +76,7 @@ file copy -force $AOS_SRC/ChannelMerge.sv $TARGET_DIR
 file copy -force $AOS_SRC/FourInputArbiter.sv $TARGET_DIR
 file copy -force $AOS_SRC/MemDrive.sv $TARGET_DIR
 file copy -force $AOS_SRC/MemDrive_SoftReg.sv $TARGET_DIR
+file copy -force $AOS_SRC/QuiescenceApp_SoftReg.sv $TARGET_DIR
 file copy -force $AOS_SRC/RRWCArbiter.sv $TARGET_DIR
 file copy -force $AOS_SRC/RespMerge.sv $TARGET_DIR
 file copy -force $AOS_SRC/TwoInputArbiter.sv $TARGET_DIR
