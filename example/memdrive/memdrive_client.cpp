@@ -21,7 +21,7 @@ int main(int argc, char **argv) {
     // Check if quiesced before requesting (answer should be no)
     bool quiesced[num_instances];
     for (uint64_t i = 0; i < num_instances; i++) {
-        client_handle[i]->aos_quiesce_check(quiesced[i]);
+        client_handle[i]->aos_quiescence_check(quiesced[i]);
         printf("Prior to quiescence request, memdrive app %ld is%squiesced \n", i, quiesced[i] ? " " : " not ");
     }
 
@@ -48,8 +48,8 @@ int main(int argc, char **argv) {
     }
 
     for (uint64_t i = 0; i < num_instances; i++) {
-        client_handle[i]->aos_quiesce_request();
-        client_handle[i]->aos_quiesce_check(quiesced[i]);
+        client_handle[i]->aos_quiescence_request();
+        client_handle[i]->aos_quiescence_check(quiesced[i]);
         printf("Immediately after quiescence request, memdrive app %ld is%squiesced \n", i, quiesced[i] ? " " : " not ");
     }
 
@@ -68,7 +68,7 @@ int main(int argc, char **argv) {
     }
 
     for (uint64_t i = 0; i < num_instances; i++) {
-        client_handle[i]->aos_quiesce_check(quiesced[i]);
+        client_handle[i]->aos_quiescence_check(quiesced[i]);
         printf("After getting start and end cycle, memdrive app %ld is%squiesced \n", i, quiesced[i] ? " " : " not ");
     }
 

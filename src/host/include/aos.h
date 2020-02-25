@@ -43,7 +43,11 @@ enum class aos_socket_command {
     BULKDATA_READ_REQUEST,
     BULKDATA_READ_RESPONSE,
     BULKDATA_WRITE_REQUEST,
-    BULKDATA_WRITE_RESPONSE
+    BULKDATA_WRITE_RESPONSE,
+    QUIESCENCE_REQ_REQUEST,
+    QUIESCENCE_REQ_RESPONSE,
+    QUIESCENCE_CHECK_REQUEST,
+    QUIESCENCE_CHECK_RESPONSE     
 };
 
 
@@ -58,6 +62,7 @@ enum class aos_errcode {
     TIMEOUT,
     SOCKET_FAILURE,
     INVALID_REQUEST,
+    QUIESCENCE_UNAVAILABLE,
     UNKNOWN_FAILURE
 };
 
@@ -292,18 +297,94 @@ public:
         return aos_errcode::SUCCESS;
     }
 
-    aos_errcode aos_quiesce_request() {
-        aos_errcode errorcode = aos_cntrlreg_write(0x1FF8, 1);  // TODO: maybe not hardcode in these addresses
-        return errorcode;
+    aos_errcode aos_quiescence_request() {
+        //aos_errcode errorcode = aos_cntrlreg_write(0x1FF8, 1);  // TODO: maybe not hardcode in these addresses
+        //return errorcode;
+
+        assert(intialized);
+        // Open the socket
+        openSocket();
+        // Create the packet
+        aos_socket_command_packet cmd_pckt;
+        cmd_pckt.command_type = aos_socket_command::QUIESCENCE_REQ_REQUEST;
+        cmd_pckt.session_id = session_id;
+        cmd_pckt.addr64 = 0x0;
+        cmd_pckt.data64 = 1;
+        // Send over the request
+        writeCommandPacket(cmd_pckt);
+        // read the response packet
+        aos_socket_response_packet resp_pckt;
+        readResponsePacket(resp_pckt);
+        // close socket
+        closeSocket();
+        // Return success/error condition
+        return resp_pckt.errorcode;
     }
     
-    aos_errcode aos_quiesce_check(bool & quiesced) {
-        uint64_t quiesced_val;
-        aos_errcode errorcode = aos_cntrlreg_read(0x1FF0, quiesced_val);
+    aos_errcode aos_quiescence_check(bool & quiesced) {
+        //uint64_t quiesced_val;
+        //aos_errcode errorcode = aos_cntrlreg_read(0x1FF0, quiesced_val);
+        //if (errorcode != aos_errcode::SUCCESS) {
+        //    return errorcode;
+        //}
+        //
+        //if (quiesced_val == 0) {
+        //    quiesced = false;
+        //} else if (quiesced_val == 1) {
+        //    quiesced = true;
+        //} else {
+        //    return aos_errcode::UNKNOWN_FAILURE;
+        //}
+        //
+        //return errorcode;
+
+        assert(intialized);
+        aos_errcode errorcode = aos_quiescence_check_request();
         if (errorcode != aos_errcode::SUCCESS) {
-            return errorcode;
+        	return errorcode;
         }
-        
+        // do some error checking
+        errorcode = aos_quiescence_check_response(quiesced);
+        return errorcode;
+    }
+
+    aos_errcode aos_quiescence_check_request() {
+        assert(intialized);
+        // Open the socket
+        openSocket();
+        // Create the packet
+        aos_socket_command_packet cmd_pckt;
+        cmd_pckt.command_type = aos_socket_command::QUIESCENCE_CHECK_REQUEST;
+        cmd_pckt.session_id = session_id;
+        cmd_pckt.addr64 = 0x0;
+        // Send over the request
+        writeCommandPacket(cmd_pckt);
+        // read the response packet
+        aos_socket_response_packet resp_pckt;
+        readResponsePacket(resp_pckt);
+        // close socket
+        closeSocket();
+        // Return success/error condition
+        return resp_pckt.errorcode;
+    }
+
+    aos_errcode aos_quiescence_check_response(bool & quiesced) {
+        assert(intialized);
+        // Open the socket
+        openSocket();
+        // Create the packet
+        aos_socket_command_packet cmd_pckt;
+        cmd_pckt.command_type = aos_socket_command::QUIESCENCE_CHECK_RESPONSE;
+        cmd_pckt.session_id = session_id;
+        // send over the request
+        writeCommandPacket(cmd_pckt);
+        // read the response packet
+        aos_socket_response_packet resp_pckt;
+        readResponsePacket(resp_pckt);
+        // close the socket
+        closeSocket();
+        // copy over the data
+        uint64_t quiesced_val = resp_pckt.data64;
         if (quiesced_val == 0) {
             quiesced = false;
         } else if (quiesced_val == 1) {
@@ -311,9 +392,10 @@ public:
         } else {
             return aos_errcode::UNKNOWN_FAILURE;
         }
-        
-        return errorcode;
+
+        return aos_errcode::SUCCESS;
     }
+    
 
     aos_errcode aos_bulkdata_read(uint64_t addr, size_t numBytes, void * buf) {
         assert(intialized);
