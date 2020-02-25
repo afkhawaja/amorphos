@@ -65,5 +65,17 @@ typedef struct packed {
 	logic                       last;
 } PCIEPacket;
 
+typedef struct packed {
+	logic                       valid;
+  logic                       isRequest;
+	logic [63:0]                data;
+} QuiescenceReq;
+
+typedef struct packed {
+	logic                       valid;
+	logic [63:0]                data;
+} QuiescenceResp;
+
+
 endpackage
 `endif

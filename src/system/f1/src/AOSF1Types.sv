@@ -9,6 +9,11 @@ parameter USING_F1 = 1;
 parameter F1_NUM_APPS = 8;
 parameter F1_ALL_APPS_SAME = 1;
 
+// QuiescenceApp_SoftReg
+parameter QUIESCENCE_SOFTREG_FIFO_Type  = 0;
+parameter QUIESCENCE_SOFTREG_FIFO_DEPTH = 7;
+
+
 // MemDrive_SoftReg
 parameter MEMDRIVE_SOFTREG_FIFO_Type  = 0;
 parameter MEMDRIVE_SOFTREG_FIFO_Depth = 4;
