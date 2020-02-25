@@ -12,7 +12,7 @@ parameter F1_USE_QUIESCENCE_APP = 1;
 
 // QuiescenceApp_SoftReg
 parameter QUIESCENCE_SOFTREG_FIFO_Type  = 0;
-parameter QUIESCENCE_SOFTREG_FIFO_DEPTH = 7;
+parameter QUIESCENCE_SOFTREG_FIFO_Depth = 7;
 
 // MemDrive_SoftReg
 parameter MEMDRIVE_SOFTREG_FIFO_Type  = 0;

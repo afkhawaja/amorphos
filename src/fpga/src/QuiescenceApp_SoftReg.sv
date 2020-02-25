@@ -124,7 +124,7 @@ module QuiescenceApp_SoftReg
 
     // Quiescence client update
     always@(posedge clk) begin : qreq_slot_update
-        if (rst || reset_curr_qreq_slot) begin
+        if (rst || reset_curr_qresp_slot) begin
             curr_qresp_slot <= NOSLOT_ADDR;
         end else begin
             if (curr_qresp_slot_we) begin
@@ -213,7 +213,7 @@ module QuiescenceApp_SoftReg
                     end                    
                 end else begin
                     // Waiting on a quiescence command to deliver
-                    reset_curr_qreq_slot = 1'b1;  // Not interacting with any slot
+                    reset_curr_qresp_slot = 1'b1;  // Not interacting with any slot
                     next_state = DELIV_REQS;
                 end
             end // case: DELIV_REQS          
