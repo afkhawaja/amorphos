@@ -14,7 +14,6 @@ public:
     const static uint16_t pci_vendor_id = 0x1D0F; /* Amazon PCI Vendor ID */
     const static uint16_t pci_device_id = 0xF000; /* PCI Device ID preassigned by Amazon for F1 applications */
 
-
     aos_host(uint64_t num_fpgas, bool dummy) :
         num_fpga(num_fpgas),
         isDummy(dummy),
@@ -33,6 +32,7 @@ public:
             slot_appid_map.push_back(std::map<uint64_t, std::string>());
             xdma_write_channel[fpga_id] = 0;
             xdma_read_channel[fpga_id]  = 0;
+            quiescence_sessions.push_back(0xDEADDEADDEADDEAD);
         }
         // Socket stuff
         memset(&socket_name, 0, sizeof(sockaddr_un));
@@ -49,6 +49,12 @@ public:
         int rc = fpga_init();
         if (rc != 0) {
             assert(false);
+        }
+
+        // Quiescence for dummy
+        // TODO: make this nicer
+        if (dummy) {
+            dummy_quiescence_session_id = generateNewSessionId();
         }
     }
 
@@ -187,6 +193,18 @@ public:
             break;
             case aos_socket_command::BULKDATA_READ_RESPONSE : {
                 return handleBulkDataReadResponse(cfd, cmd_pckt);
+            }
+            break;
+            case aos_socket_command::QUIESCENCE_REQ_REQUEST : {
+                return handleQuiescenceReqRequest(cfd, cmd_pckt);
+            }
+            break;
+            case aos_socket_command::QUIESCENCE_CHECK_REQUEST : {
+                return handleQuiescenceCheckRequest(cfd, cmd_pckt);
+            }
+            break;
+            case aos_socket_command::QUIESCENCE_CHECK_RESPONSE : {
+                return handleQuiescenceCheckResponse(cfd, cmd_pckt);
             }
             break;
             case aos_socket_command::INTIATE_SESSION : {
@@ -436,6 +454,182 @@ public:
         session_ptr->clearPendingDMARead();
 
         return 0;
+    }
+
+    int handleQuiescenceReqRequest(int cfd, aos_socket_command_packet & cmd_pckt) {
+        const session_id_t client_session_id = cmd_pckt.session_id;
+        int success = 1;
+
+        aos_socket_response_packet resp_pckt;
+        resp_pckt.errorcode  = aos_errcode::SUCCESS;
+        resp_pckt.session_id = client_session_id;
+
+        // Check if the session is valid
+        if (!isSessionIdValid(client_session_id)) {
+            resp_pckt.errorcode  = aos_errcode::INVALID_SESSION_ID;
+            writeResponsePacket(cfd, resp_pckt);
+            return success;
+        }
+
+        if (!isDummy) {
+            if (!isSessionScheduled(client_session_id)) {
+                handleScheduling(client_session_id);
+            }
+            const session_id_t quiescence_session_id = getQuiescenceSessionId(client_session_id);
+            if (quiescence_session_id == 0xDEADDEADDEADDEAD) {
+                resp_pckt.errorcode = aos_errcode::QUIESCENCE_UNAVAILABLE;
+                writeResponsePacket(cfd, resp_pckt);
+                return success;
+            }
+
+            const uint64_t fpga_id = getFPGAId(quiescence_session_id);
+            const uint64_t quiescence_slot_id = getSlotId(quiescence_session_id);
+            const uint64_t client_slot_id = getSlotId(client_session_id);
+            const uint64_t client_req_addr = client_slot_id << 3;  // Make sure address is 8 byte aligned
+            success = write_pci_bar1(fpga_id, quiescence_slot_id, client_req_addr, cmd_pckt.data64);
+        } else {
+            // Dummy mode uses the session_id to access everything, no real slots
+            if (dummy_cntrlreg_map.find(dummy_quiescence_session_id) == dummy_cntrlreg_map.end()) {
+                dummy_cntrlreg_map[dummy_quiescence_session_id] = std::map<uint64_t, uint64_t>();
+            }
+            // TODO: deal with dummy address mapping to slot...
+            // For now just use client session id << 3...
+            const uint64_t client_req_addr = client_session_id << 3;
+            (dummy_cntrlreg_map[dummy_quiescence_session_id])[client_req_addr] = cmd_pckt.data64;
+            success = 0;
+        }
+
+        writeResponsePacket(cfd, resp_pckt);
+
+        return success;
+    }
+    
+    int handleQuiescenceCheckRequest(int cfd, aos_socket_command_packet & cmd_pckt) {
+        const session_id_t client_session_id = cmd_pckt.session_id;
+        int success = 1;
+
+        aos_socket_response_packet resp_pckt;
+        resp_pckt.errorcode  = aos_errcode::SUCCESS;
+        resp_pckt.session_id = client_session_id;
+
+        // Check if the session is valid
+        if (!isSessionIdValid(client_session_id)) {
+            resp_pckt.errorcode  = aos_errcode::INVALID_SESSION_ID;
+            writeResponsePacket(cfd, resp_pckt);
+            return success;
+        }
+        //} else if (!isSessionScheduled(client_session_id) || lazy_reads) {
+        //    // Can't contact specific quiescence app if the session isn't scheduled
+        //    resp_pckt.errorcode  = aos_errcode::QUIESCENCE_UNAVAILABLE;
+        //    writeResponsePacket(cfd, resp_pckt);
+        //    return success;
+        //}
+        
+        // Only check quiescence if !lazy_reads (so don't enqueue here)
+        quiescenceEnqCheckReq(client_session_id);
+        
+        // Check if the read is executed immediately
+        if (!isDummy && !lazy_reads) {
+            if (!isSessionScheduled(client_session_id)) {
+                handleScheduling(client_session_id);
+            }
+            quiescenceDeqCheckReq(client_session_id);
+
+            const session_id_t quiescence_session_id = getQuiescenceSessionId(client_session_id);
+            if (quiescence_session_id == 0xDEADDEADDEADDEAD) {
+                resp_pckt.errorcode = aos_errcode::QUIESCENCE_UNAVAILABLE;
+                writeResponsePacket(cfd, resp_pckt);
+                return success;
+            }
+
+            const uint64_t client_slot_id = getSlotId(client_session_id);
+            const uint64_t read_addr_ = client_slot_id << 3;  // Make sure address is 8 byte aligned
+            //cntrlRegEnqReadReq(quiescence_session_id, read_addr_);
+            
+            //cntrlRegDeqReadReq(quiescence_session_id);
+            uint64_t read_value_;
+            const uint64_t fpga_id = getFPGAId(quiescence_session_id);
+            const uint64_t quiescence_slot_id = getSlotId(quiescence_session_id);
+            success = read_pci_bar1(fpga_id, quiescence_slot_id, read_addr_, read_value_);
+            if (success != 0) {
+                perror("Read over pci bar1 failed on the daemon");
+                resp_pckt.errorcode = aos_errcode::UNKNOWN_FAILURE;
+            }
+            quiescenceEnqCheckResp(client_session_id, read_value_);
+
+        } else {
+            const uint64_t read_addr_ = client_session_id << 3;
+            if (dummy_cntrlreg_map.find(dummy_quiescence_session_id) == dummy_cntrlreg_map.end()) {
+                dummy_cntrlreg_map[dummy_quiescence_session_id] = std::map<uint64_t, uint64_t>();
+            }
+            auto & app_cntrl_reg_map = dummy_cntrlreg_map[dummy_quiescence_session_id];
+            if (app_cntrl_reg_map.find(read_addr_) == app_cntrl_reg_map.end()) {
+                app_cntrl_reg_map[read_addr_] = 0x0;
+            }
+            quiescenceDeqCheckReq(dummy_quiescence_session_id);
+            quiescenceEnqCheckResp(dummy_quiescence_session_id, app_cntrl_reg_map[read_addr_]);
+            success = 0;
+        }
+
+        writeResponsePacket(cfd, resp_pckt);
+
+        return success;
+    }
+
+    int handleQuiescenceCheckResponse(int cfd, aos_socket_command_packet & cmd_pckt) {
+        const session_id_t client_session_id = cmd_pckt.session_id;
+        
+        int success = 0;
+
+        aos_socket_response_packet resp_pckt;
+        resp_pckt.errorcode  = aos_errcode::SUCCESS;
+        resp_pckt.session_id = client_session_id;
+
+        if (!lazy_reads && (quiescence_check_response_queue[client_session_id].size() == 0)) {
+            perror("No available data to return for the read response");
+        }
+
+        uint64_t data64_ = 0x0;
+
+        if (!isDummy) {
+            //const session_id_t quiescence_session_id = getQuiescenceSessionId(client_session_id);
+            if (!lazy_reads) {
+                data64_ = quiescenceDeqCheckResp(client_session_id);
+            } else {
+                // Actually execute the read operation
+                if (!isSessionScheduled(client_session_id)) {
+                    handleScheduling(client_session_id);
+                }
+                
+                quiescenceDeqCheckReq(client_session_id);
+                const session_id_t quiescence_session_id = getQuiescenceSessionId(client_session_id);
+                if (quiescence_session_id == 0xDEADDEADDEADDEAD) {
+                    resp_pckt.errorcode = aos_errcode::QUIESCENCE_UNAVAILABLE;
+                    writeResponsePacket(cfd, resp_pckt);
+                    return success;
+                }
+
+                const uint64_t client_slot_id = getSlotId(client_session_id);
+                const uint64_t read_addr_ = client_slot_id << 3;  // Make sure address is 8 byte aligned
+                
+                const uint64_t fpga_id = getFPGAId(quiescence_session_id);
+                const uint64_t quiescence_slot_id = getSlotId(quiescence_session_id);
+                                
+                success = read_pci_bar1(fpga_id, quiescence_slot_id, read_addr_, data64_);
+                if (success != 0) {
+                    perror("Read over pci bar1 failed on the daemon");
+                    resp_pckt.errorcode = aos_errcode::UNKNOWN_FAILURE;
+                }
+            }
+        } else {
+            data64_ = quiescenceDeqCheckResp(client_session_id);
+        }
+
+        resp_pckt.data64    = data64_;
+
+        writeResponsePacket(cfd, resp_pckt);
+
+        return success;
     }
 
     int handleIntiateSession(int cfd, aos_socket_command_packet & cmd_pckt) {
@@ -736,11 +930,17 @@ private:
     // Dummy behavior
     const bool isDummy;
     std::map<uint64_t, std::map<uint64_t, uint64_t>> dummy_cntrlreg_map;
+    session_id_t dummy_quiescence_session_id;
 
     // CntrlReq read/response state
     const bool lazy_reads;
     std::map<uint64_t, std::queue<uint64_t>> cntrlreg_read_request_queue;
     std::map<uint64_t, std::queue<uint64_t>> cntrlreg_read_response_queue;
+
+    // Quiescence state
+    std::vector<session_id_t> quiescence_sessions;
+    std::map<uint64_t, uint64_t> quiescence_check_request_queue;
+    std::map<uint64_t, std::queue<uint64_t>> quiescence_check_response_queue;
 
     // Keep track of DMA writes/reads that need to happen
     std::queue<uint64_t> pending_dma_session_id;
@@ -786,6 +986,50 @@ private:
         //std::cout << "Daemon Deqeue resp: " << data64_ << " for app: " << app_id << std::endl << std::flush;
 
         cntrlreg_read_response_queue[app_id].pop();
+        return data64_;
+    }
+
+    void quiescenceEnqCheckReq(uint64_t client_session_id) {
+        if (quiescence_check_request_queue.find(client_session_id) == quiescence_check_request_queue.end()) {
+            quiescence_check_request_queue[client_session_id] = 0;
+        }
+        
+        // Increment the number of quiescence checks to this session_id
+        (quiescence_check_request_queue[client_session_id])++;
+    }
+
+    bool quiescenceDeqCheckReq(uint64_t client_session_id) {
+        if (quiescence_check_request_queue.find(client_session_id) == quiescence_check_request_queue.end()) {
+            perror("Invalid app id for quiescence check req dequeue");
+        }
+
+        if (quiescence_check_request_queue[client_session_id] > 0) {
+            (quiescence_check_request_queue[client_session_id])--;
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    void quiescenceEnqCheckResp(uint64_t client_session_id, uint64_t data64) {
+        if (quiescence_check_response_queue.find(client_session_id) == quiescence_check_response_queue.end()) {
+            quiescence_check_response_queue[client_session_id] = std::queue<uint64_t>();
+        }
+        //std::cout << "Daemon Enqueu resp: " << data64 << " for app: " << client_session_id << std::endl << std::flush;
+        quiescence_check_response_queue[client_session_id].push(data64);
+    }
+
+    uint64_t quiescenceDeqCheckResp(uint64_t client_session_id) {
+        if (quiescence_check_response_queue.find(client_session_id) == quiescence_check_response_queue.end()) {
+            perror("Invalid app id for cntrl reg read resp deque");
+        }
+        if (quiescence_check_response_queue[client_session_id].size() == 0) {
+            perror("No response ready");
+        }
+        uint64_t data64_ = quiescence_check_response_queue[client_session_id].front();
+        //std::cout << "Daemon Deqeue resp: " << data64_ << " for app: " << client_session_id << std::endl << std::flush;
+
+        quiescence_check_response_queue[client_session_id].pop();
         return data64_;
     }
 
@@ -942,6 +1186,12 @@ private:
             // No App in this slot
             return;
         }
+        
+        // Remove this app from quiescence_sessions if it's in there
+        if (quiescence_sessions[fpga_id] == session_ptr->getSessionId()) {
+            quiescence_sessions[fpga_id] = 0xDEADDEADDEADDEAD;
+        }
+        
         // Evacuate the app, state capture
         evacuateApp(fpga_id, slot_id);
         // Clean up metadata
@@ -967,6 +1217,9 @@ private:
         slot_appid_map_.clear();
         // Clear the slot_session_map
         slot_session_map_.clear();
+        
+        // Clear the quiescence session id
+        quiescence_sessions[fpga_id] = 0xDEADDEADDEADDEAD;
 
         uint64_t num_slots_new_image = newImage["num_slots"];
 
@@ -997,7 +1250,7 @@ private:
     }
 
     json & getReplacementImage(std::string app_id_to_schedule) {
-
+      
         // Generate app id / count vectors
         std::vector<std::string>   app_ids;
         std::vector<uint32_t>      app_counts;
@@ -1010,6 +1263,7 @@ private:
         // Determine which image should be the replacement one
         uint32_t selected_idx = 0;
         // Current algorithm just selects the one with the highest overall app/slot count (very basic)
+        // TODO: maybe prefer an image with a quiescence app? 
         uint32_t highest_num_apps = 0;
         for (uint32_t vector_idx = 0; vector_idx < fitting_indices.size(); vector_idx++) {
             const uint32_t num_slots = sched->getImageByIdx(fitting_indices[vector_idx])["num_slots"];
@@ -1321,5 +1575,44 @@ private:
         cout << std::flush;
 
     }
+
+    session_id_t getQuiescenceSessionId(session_id_t client_session_id) {
+        const uint64_t fpga_id = getFPGAId(client_session_id);
+        session_id_t quiescence_session_id = quiescence_sessions[fpga_id];
+
+        // Return a valid quiescence session id
+        if (quiescence_session_id != 0xDEADDEADDEADDEAD && 
+            isSessionIdValid(quiescence_session_id) &&
+            isSessionScheduled(quiescence_session_id)) {
+            return quiescence_session_id;
+        }
+        // If this session is not valid or scheduled, create a new one and schedule it
+        // TODO: better clean-up, though this shouldn't happen in general
+        quiescence_session_id = 0xDEADDEADDEADDEAD;
+
+        // Either this image does not have a quiescence app or the quiescence app has not yet been bound
+        uint64_t quiescence_slot_id = getAvailableSlot(fpga_id, "quiescence");
+        if (quiescence_slot_id == (uint64_t)~0x0) {
+            return quiescence_session_id;
+        }
+
+        // Check if a different session is bound to this slot
+        // We assume that this app is being used for a different purpose, so return an error
+        // Could use getSessionId if we want to mark it as the quiescence app for this fpga instead
+        if (slot_session_map[fpga_id][quiescence_slot_id] != nullptr) {
+            return quiescence_session_id;
+        }
+        
+        // Create a new session for this quiescence app and bind it to the correct slot
+        quiescence_session_id = generateNewSessionId();
+        sessions[quiescence_session_id] = new aos_app_session("quiescence", quiescence_session_id);
+        // Bind this session to this slot
+        bindAppToSlot(quiescence_session_id, fpga_id, quiescence_slot_id);
+        // Set the quiescence session for this fpga
+        quiescence_sessions[fpga_id] = quiescence_session_id;
+        
+        return quiescence_session_id;
+    }
+
 
 };
