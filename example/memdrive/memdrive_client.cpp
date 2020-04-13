@@ -2,7 +2,7 @@
 
 int main(int argc, char **argv) {
 
-    const uint64_t num_instances = 8;
+    const uint64_t num_instances = 7;
 
     aos_client * client_handle[num_instances];
     uint64_t session_id[num_instances];
@@ -21,8 +21,11 @@ int main(int argc, char **argv) {
     // Check if quiesced before requesting (answer should be no)
     bool quiesced[num_instances];
     for (uint64_t i = 0; i < num_instances; i++) {
-        client_handle[i]->aos_quiescence_check(quiesced[i]);
-        printf("Prior to quiescence request, memdrive app %ld is%squiesced \n", i, quiesced[i] ? " " : " not ");
+        if (client_handle[i]->aos_quiescence_check(quiesced[i]) == aos_errcode::QUIESCENCE_UNAVAILABLE) {
+            printf("Quiescence not available for memdrive app %ld\n", i);
+        } else {
+            printf("Prior to quiescence request, memdrive app %ld is%squiesced \n", i, quiesced[i] ? " " : " not ");
+      }
     }
 
 
