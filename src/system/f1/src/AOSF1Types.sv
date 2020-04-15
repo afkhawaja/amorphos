@@ -42,7 +42,7 @@ parameter F1_CONFIG_DDR_CONFIG     = 3;
 // 1 - MemDrive
 // 2 - Real/Dummy DNNWeaver
 // 3 - Bitcoin
-parameter F1_CONFIG_APPS           = 1;
+parameter F1_CONFIG_APPS           = 2;
 // AmorphOS Memory Build Configs
 // 0 - No AMI (limited to 1 app)
 // 1 - AMI    (N Apps)

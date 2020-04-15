@@ -968,7 +968,11 @@ generate
          
                   // Soft register interface
                   .softreg_req(app_softreg_req[app_num]),
-                  .softreg_resp(app_softreg_resp[app_num])
+                  .softreg_resp(app_softreg_resp[app_num]),
+
+                  // Quiescence interface
+                  .quiescence_req(app_quiescence_req[app_num]),
+                  .quiescence_resp(app_quiescence_resp[app_num])
                );
             end else if (F1_CONFIG_APPS == 3) begin : multi_bitcoin
                BitcoinTop_SoftReg
@@ -1033,8 +1037,8 @@ generate
                   .softreg_resp(app_softreg_resp[app_num]),
 
                   // Quiescence interface
-                  .quiescence_req(app_quiescence_req[app_num]),
-                  .quiescence_resp(app_quiescence_resp[app_num])
+                  .quiescence_req(),
+                  .quiescence_resp()
                );
             end else if (F1_CONFIG_APPS == 2) begin : multi_dnnweaver
                DNNDrive_SoftReg
@@ -1064,7 +1068,11 @@ generate
       
                   // Soft register interface
                   .softreg_req(app_softreg_req[app_num]),
-                  .softreg_resp(app_softreg_resp[app_num])
+                  .softreg_resp(app_softreg_resp[app_num]),
+
+                  // Quiescence interface
+                  .quiescence_req(),
+                  .quiescence_resp()
                );
             end else if (F1_CONFIG_APPS == 3) begin : multi_bitcoin
                BitcoinTop_SoftReg

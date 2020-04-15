@@ -23,6 +23,7 @@ set HDK_SHELL_DESIGN_DIR $::env(HDK_SHELL_DESIGN_DIR)
 set CL_DIR $::env(CL_DIR)
 set AOS_SRC $::env(AOS_SRC)
 set F1_SRC $::env(F1_SRC)
+set DNN_SRC $::env(DNN_SRC)
 set TARGET_DIR $CL_DIR/build/src_post_encryption
 set UNUSED_TEMPLATES_DIR $HDK_SHELL_DESIGN_DIR/interfaces
 # Remove any previously encrypted files, that may no longer be used
@@ -84,6 +85,61 @@ file copy -force $AOS_SRC/AmorphOSSoftReg.sv $TARGET_DIR
 #file copy -force $AOS_SRC/AmorphOSPCIE.sv $TARGET_DIR
 file copy -force $AOS_SRC/AmorphOSMem.sv $TARGET_DIR
 file copy -force $AOS_SRC/AmorphOSMem2SDRAM.sv $TARGET_DIR
+# DNN Weaver
+file copy -force $DNN_SRC/include/dw_params.vh $TARGET_DIR
+file copy -force $DNN_SRC/include/common.vh $TARGET_DIR
+file copy -force $DNN_SRC/include/norm_lut.mif $TARGET_DIR
+file copy -force $DNN_SRC/include/rd_mem_controller.mif $TARGET_DIR
+file copy -force $DNN_SRC/include/wr_mem_controller.mif $TARGET_DIR
+file copy -force $DNN_SRC/include/pu_controller_bin.mif $TARGET_DIR
+file copy -force $DNN_SRC/source/axi_master/axi_master.v $TARGET_DIR
+file copy -force $DNN_SRC/source/axi_master_wrapper/axi_master_wrapper.v $TARGET_DIR
+file copy -force $DNN_SRC/source/axi_master/wburst_counter.v $TARGET_DIR
+file copy -force $DNN_SRC/source/primitives/FIFO/fifo.v $TARGET_DIR
+file copy -force $DNN_SRC/source/primitives/FIFO/fifo_fwft.v $TARGET_DIR
+file copy -force $DNN_SRC/source/primitives/FIFO/xilinx_bram_fifo.v $TARGET_DIR
+file copy -force $DNN_SRC/source/primitives/ROM/ROM.v $TARGET_DIR
+file copy -force $DNN_SRC/source/axi_slave/axi_slave.v $TARGET_DIR
+file copy -force $DNN_SRC/source/dnn_accelerator/dnn_accelerator.v $TARGET_DIR
+file copy -force $DNN_SRC/source/mem_controller/mem_controller.v $TARGET_DIR
+file copy -force $DNN_SRC/source/mem_controller/mem_controller_top.v $TARGET_DIR
+file copy -force $DNN_SRC/source/primitives/MACC/multiplier.v $TARGET_DIR
+file copy -force $DNN_SRC/source/primitives/MACC/macc.v $TARGET_DIR
+file copy -force $DNN_SRC/source/primitives/COUNTER/counter.v $TARGET_DIR
+file copy -force $DNN_SRC/source/PU/PU.v $TARGET_DIR
+file copy -force $DNN_SRC/source/PE/PE.v $TARGET_DIR
+file copy -force $DNN_SRC/source/primitives/REGISTER/register.v $TARGET_DIR
+file copy -force $DNN_SRC/source/normalization/normalization.v $TARGET_DIR
+file copy -force $DNN_SRC/source/primitives/PISO/piso.v $TARGET_DIR
+file copy -force $DNN_SRC/source/primitives/PISO/piso_norm.v $TARGET_DIR
+file copy -force $DNN_SRC/source/primitives/SIPO/sipo.v $TARGET_DIR
+file copy -force $DNN_SRC/source/pooling/pooling.v $TARGET_DIR
+file copy -force $DNN_SRC/source/primitives/COMPARATOR/comparator.v $TARGET_DIR
+file copy -force $DNN_SRC/source/primitives/MUX/mux_2x1.v $TARGET_DIR
+file copy -force $DNN_SRC/source/PE_buffer/PE_buffer.v $TARGET_DIR
+file copy -force $DNN_SRC/source/primitives/lfsr/lfsr.v $TARGET_DIR
+file copy -force $DNN_SRC/source/vectorgen/vectorgen.v $TARGET_DIR
+file copy -force $DNN_SRC/source/PU/PU_controller.v $TARGET_DIR
+file copy -force $DNN_SRC/source/weight_buffer/weight_buffer.v $TARGET_DIR
+file copy -force $DNN_SRC/source/primitives/RAM/ram.v $TARGET_DIR
+file copy -force $DNN_SRC/source/data_packer/data_packer.v $TARGET_DIR
+file copy -force $DNN_SRC/source/data_unpacker/data_unpacker.v $TARGET_DIR
+file copy -force $DNN_SRC/source/activation/activation.v $TARGET_DIR
+file copy -force $DNN_SRC/source/read_info/read_info.v $TARGET_DIR
+file copy -force $DNN_SRC/source/buffer_read_counter/buffer_read_counter.v $TARGET_DIR
+file copy -force $DNN_SRC/source/loopback/loopback_top.v $TARGET_DIR
+file copy -force $DNN_SRC/source/loopback/loopback.v $TARGET_DIR
+file copy -force $DNN_SRC/source/loopback_pu_controller/loopback_pu_controller_top.v $TARGET_DIR
+file copy -force $DNN_SRC/source/loopback_pu_controller/loopback_pu_controller.v $TARGET_DIR
+file copy -force $DNN_SRC/source/serdes/serdes.v $TARGET_DIR
+file copy -force $DNN_SRC/source/ami/dnn2ami_wrapper.sv $TARGET_DIR
+file copy -force $DNN_SRC/source/ami/mem_controller_top_ami.sv $TARGET_DIR
+file copy -force $DNN_SRC/source/ami/dnn_accelerator_ami.sv $TARGET_DIR
+file copy -force $DNN_SRC/source/ami/dnnweaver_ami_top.sv $TARGET_DIR
+#file copy -force $DNN_SRC/source/ami/DNNDrive.sv $TARGET_DIR
+file copy -force $DNN_SRC/source/ami/DNNDrive_SoftReg.sv $TARGET_DIR
+file copy -force $DNN_SRC/source/ami/DNN2AMI.sv $TARGET_DIR
+file copy -force $DNN_SRC/source/ami/DNN2AMI_WRPath.sv $TARGET_DIR
 # F1 interfaces
 file copy -force $F1_SRC/AXIL2SR.sv $TARGET_DIR
 file copy -force $F1_SRC/AXIL2SR_Extended.sv $TARGET_DIR
